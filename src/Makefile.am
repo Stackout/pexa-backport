@@ -85,10 +85,6 @@ if BUILD_PEXAD
   bin_PROGRAMS += pexad
 endif
 
-if BUILD_PEXA_NODE
-  bin_PROGRAMS += pexa-node
-endif
-
 if BUILD_PEXA_CLI
   bin_PROGRAMS += pexa-cli
 endif
@@ -101,9 +97,25 @@ if BUILD_PEXA_WALLET
 endif
 endif
 
+### VeriBlock section start
+VBK_H = \
+  vbk/entity/context_info_container.hpp \
+  vbk/init.hpp \
+  vbk/service_locator.hpp \
+  vbk/pop_service.hpp \
+  vbk/pop_service_impl.hpp \
+  vbk/config.hpp \
+  vbk/typed_wrapper.hpp \
+  vbk/merkle.hpp \
+  vbk/genesis.hpp \
+  vbk/altchainparam.hpp \
+  vbk/util.hpp
+### VeriBlock section end
+
 .PHONY: FORCE check-symbols check-security
 # pexa core #
 PEXA_CORE_H = \
+  $(VBK_H) \
   addrdb.h \
   addrman.h \
   attributes.h \
@@ -159,6 +171,7 @@ PEXA_CORE_H = \
   blockencodings.h \
   blockfilter.h \
   chain.h \
+  bootstraps.h \
   chainparams.h \
   chainparamsbase.h \
   chainparamsseeds.h \
@@ -321,6 +334,8 @@ libpexa_util_a-clientversion.$(OBJEXT): obj/build.h
 libpexa_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(PEXA_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libpexa_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libpexa_server_a_SOURCES = \
+  vbk/pop_service_impl.cpp \
+  vbk/pop_service_impl.hpp \
   addrdb.cpp \
   addrman.cpp \
   banman.cpp \
@@ -352,6 +367,8 @@ libpexa_server_a_SOURCES = \
   policy/settings.cpp \
   pow.cpp \
   rest.cpp \
+  vbk/rpc_register.hpp \
+  vbk/rpc_register.cpp \
   rpc/blockchain.cpp \
   rpc/mining.cpp \
   rpc/misc.cpp \
@@ -514,6 +531,7 @@ libpexa_common_a_SOURCES = \
   base58.cpp \
   bech32.cpp \
   bloom.cpp \
+  bootstraps.cpp \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
@@ -610,7 +628,11 @@ if TARGET_WINDOWS
 pexa_daemon_sources += pexad-res.rc
 endif
 
+# Libraries below may be listed more than once to resolve circular dependencies (see
+# https://eli.thegreenplace.net/2013/07/09/library-order-in-static-linking#circular-dependency)
 pexa_bin_ldadd = \
+  $(VERIBLOCK_POP_CPP_LIBS) \
+  $(LIBPEXA_SERVER) \
   $(LIBPEXA_WALLET) \
   $(LIBPEXA_COMMON) \
   $(LIBPEXA_UTIL) \
@@ -623,19 +645,7 @@ pexa_bin_ldadd = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-pexa_bin_ldadd += $(BOOST_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
-
-pexad_SOURCES = $(pexa_daemon_sources)
-pexad_CPPFLAGS = $(pexa_bin_cppflags)
-pexad_CXXFLAGS = $(pexa_bin_cxxflags)
-pexad_LDFLAGS = $(pexa_bin_ldflags)
-pexad_LDADD = $(LIBPEXA_SERVER) $(pexa_bin_ldadd)
-
-pexa_node_SOURCES = $(pexa_daemon_sources)
-pexa_node_CPPFLAGS = $(pexa_bin_cppflags)
-pexa_node_CXXFLAGS = $(pexa_bin_cxxflags)
-pexa_node_LDFLAGS = $(pexa_bin_ldflags)
-pexa_node_LDADD = $(LIBPEXA_SERVER) $(pexa_bin_ldadd)
+pexa_bin_ldadd += $(BOOST_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(VERIBLOCK_POP_CPP_LIBS)
 
 # pexa-cli binary #
 pexa_cli_SOURCES = pexa-cli.cpp
@@ -651,7 +661,8 @@ pexa_cli_LDADD = \
   $(LIBPEXA_CLI) \
   $(LIBUNIVALUE) \
   $(LIBPEXA_UTIL) \
-  $(LIBPEXA_CRYPTO)
+  $(LIBPEXA_CRYPTO) \
+  $(VERIBLOCK_POP_CPP_LIBS)
 
 pexa_cli_LDADD += $(BOOST_LIBS) $(EVENT_LIBS)
 #
@@ -674,7 +685,7 @@ pexa_tx_LDADD = \
   $(LIBPEXA_CRYPTO) \
   $(LIBSECP256K1)
 
-pexa_tx_LDADD += $(BOOST_LIBS)
+pexa_tx_LDADD += $(BOOST_LIBS) $(VERIBLOCK_POP_CPP_LIBS)
 #
 
 # pexa-wallet binary #
@@ -682,7 +693,26 @@ pexa_wallet_SOURCES = pexa-wallet.cpp
 pexa_wallet_CPPFLAGS = $(pexa_bin_cppflags)
 pexa_wallet_CXXFLAGS = $(pexa_bin_cxxflags)
 pexa_wallet_LDFLAGS = $(pexa_bin_ldflags)
-pexa_wallet_LDADD = $(LIBPEXA_WALLET_TOOL) $(pexa_bin_ldadd)
+pexa_wallet_LDADD = \
+  $(LIBPEXA_WALLET_TOOL) \
+  $(LIBPEXA_WALLET) \
+  $(LIBPEXA_COMMON) \
+  $(LIBPEXA_CONSENSUS) \
+  $(LIBPEXA_UTIL) \
+  $(LIBPEXA_CRYPTO) \
+  $(LIBPEXA_ZMQ) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV) \
+  $(LIBSECP256K1) \
+  $(LIBUNIVALUE) \
+  $(VERIBLOCK_POP_CPP_LIBS) \
+  $(BOOST_LIBS) \
+  $(BDB_LIBS) \
+  $(EVENT_PTHREADS_LIBS) \
+  $(EVENT_LIBS) \
+  $(MINIUPNPC_LIBS) \
+  $(ZMQ_LIBS)
 
 if TARGET_WINDOWS
 pexa_wallet_SOURCES += pexa-wallet-res.rc
@@ -692,7 +722,7 @@ endif
 # pexaconsensus library #
 if BUILD_PEXA_LIBS
 include_HEADERS = script/pexaconsensus.h
-libpexaconsensus_la_SOURCES = support/cleanse.cpp $(crypto_libpexa_crypto_base_a_SOURCES) $(libpexa_consensus_a_SOURCES)
+libpexaconsensus_la_SOURCES = support/cleanse.cpp $(crypto_libpexa_crypto_base_a_SOURCES) $(libpexa_consensus_a_SOURCES) $(VBK_H)
 
 if GLIBC_BACK_COMPAT
   libpexaconsensus_la_SOURCES += compat/glibc_compat.cpp
@@ -782,6 +812,7 @@ include Makefile.test_fuzz.include
 
 if ENABLE_TESTS
 include Makefile.test.include
+include vbk/test/integration/Makefile.include
 endif
 
 if ENABLE_BENCH
