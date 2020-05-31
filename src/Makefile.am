@@ -85,6 +85,10 @@ if BUILD_PEXAD
   bin_PROGRAMS += pexad
 endif
 
+if BUILD_PEXA_NODE
+  bin_PROGRAMS += pexa-node
+endif
+
 if BUILD_PEXA_CLI
   bin_PROGRAMS += pexa-cli
 endif
@@ -647,6 +651,18 @@ pexa_bin_ldadd = \
 
 pexa_bin_ldadd += $(BOOST_LIBS) $(BDB_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(VERIBLOCK_POP_CPP_LIBS)
 
+pexad_SOURCES = $(pexa_daemon_sources)
+pexad_CPPFLAGS = $(pexa_bin_cppflags)
+pexad_CXXFLAGS = $(pexa_bin_cxxflags)
+pexad_LDFLAGS = $(pexa_bin_ldflags)
+pexad_LDADD = $(LIBPEXA_SERVER) $(pexa_bin_ldadd)
+
+pexa_node_SOURCES = $(pexa_daemon_sources)
+pexa_node_CPPFLAGS = $(pexa_bin_cppflags)
+pexa_node_CXXFLAGS = $(pexa_bin_cxxflags)
+pexa_node_LDFLAGS = $(pexa_bin_ldflags)
+pexa_node_LDADD = $(LIBPEXA_SERVER) $(pexa_bin_ldadd)
+
 # pexa-cli binary #
 pexa_cli_SOURCES = pexa-cli.cpp
 pexa_cli_CPPFLAGS = $(AM_CPPFLAGS) $(PEXA_INCLUDES) $(EVENT_CFLAGS)
@@ -693,26 +709,7 @@ pexa_wallet_SOURCES = pexa-wallet.cpp
 pexa_wallet_CPPFLAGS = $(pexa_bin_cppflags)
 pexa_wallet_CXXFLAGS = $(pexa_bin_cxxflags)
 pexa_wallet_LDFLAGS = $(pexa_bin_ldflags)
-pexa_wallet_LDADD = \
-  $(LIBPEXA_WALLET_TOOL) \
-  $(LIBPEXA_WALLET) \
-  $(LIBPEXA_COMMON) \
-  $(LIBPEXA_CONSENSUS) \
-  $(LIBPEXA_UTIL) \
-  $(LIBPEXA_CRYPTO) \
-  $(LIBPEXA_ZMQ) \
-  $(LIBLEVELDB) \
-  $(LIBLEVELDB_SSE42) \
-  $(LIBMEMENV) \
-  $(LIBSECP256K1) \
-  $(LIBUNIVALUE) \
-  $(VERIBLOCK_POP_CPP_LIBS) \
-  $(BOOST_LIBS) \
-  $(BDB_LIBS) \
-  $(EVENT_PTHREADS_LIBS) \
-  $(EVENT_LIBS) \
-  $(MINIUPNPC_LIBS) \
-  $(ZMQ_LIBS)
+pexa_wallet_LDADD = $(LIBPEXA_WALLET_TOOL) $(pexa_bin_ldadd)
 
 if TARGET_WINDOWS
 pexa_wallet_SOURCES += pexa-wallet-res.rc

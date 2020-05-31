@@ -106,7 +106,7 @@ static const char* DEFAULT_ASMAP_FILENAME="ip_asn.map";
 /**
  * The PID file facilities.
  */
-static const char* BITCOIN_PID_FILENAME = "vbitcoind.pid";
+static const char* PEXA_PID_FILENAME = "pexad.pid";
 
 static fs::path GetPidFile()
 {
@@ -897,6 +897,7 @@ void InitLogging()
     LogInstance().m_log_time_micros = gArgs.GetBoolArg("-logtimemicros", DEFAULT_LOGTIMEMICROS);
 #ifdef HAVE_THREAD_LOCAL
     LogInstance().m_log_threadnames = gArgs.GetBoolArg("-logthreadnames", DEFAULT_LOGTHREADNAMES);
+#endif
     LogInstance().EnableCategory(BCLog::POP);
     altintegration::SetLogger<VeriBlock::VBTCLogger>();
     altintegration::GetLogger().level = altintegration::LogLevel::info;

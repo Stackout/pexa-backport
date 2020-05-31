@@ -320,7 +320,7 @@ void BlockAssembler::SortForBlock(const CTxMemPool::setEntries& package, std::ve
 // mapModifiedTxs with the next transaction in the mempool to decide what
 // transaction package to work on next.
 template <typename MempoolComparatorTagName>
-void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated)
+void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, CBlockIndex& prevIndex)
 {
     auto& config = VeriBlock::getService<VeriBlock::Config>();
     auto& pop = VeriBlock::getService<VeriBlock::PopService>();

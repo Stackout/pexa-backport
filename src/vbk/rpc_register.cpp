@@ -13,7 +13,6 @@
 #include <key_io.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
-#include <util/validation.h>
 #include <validation.h>
 #include <wallet/rpcwallet.h>
 #include <wallet/rpcwallet.h> // for GetWalletForJSONRPCRequest
@@ -45,7 +44,7 @@ UniValue createPopTx(const CScript& scriptSig)
             nullptr /* plTxnReplaced */, false /* bypass_limits */, 0 /* nAbsurdFee */, false /* test accept */);
         if (result) {
             std::string err;
-            if (!g_rpc_chain->broadcastTransaction(tx_ref, err, 0, true)) {
+            if (!g_rpc_chain->broadcastTransaction(tx_ref, 0, true, err)) {
                 throw JSONRPCError(RPC_TRANSACTION_ERROR, err);
             }
             //            RelayTransaction(hashTx, *this->connman);
@@ -53,10 +52,10 @@ UniValue createPopTx(const CScript& scriptSig)
         }
 
         if (state.IsInvalid()) {
-            throw JSONRPCError(RPC_TRANSACTION_REJECTED, FormatStateMessage(state));
+            throw JSONRPCError(RPC_TRANSACTION_REJECTED, state.ToString());
         }
 
-        throw JSONRPCError(RPC_TRANSACTION_ERROR, FormatStateMessage(state));
+        throw JSONRPCError(RPC_TRANSACTION_ERROR, state.ToString());
     }
 
     return hashTx.GetHex();

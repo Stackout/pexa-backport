@@ -55,7 +55,8 @@ namespace BCLog {
         COINDB      = (1 << 18),
         QT          = (1 << 19),
         LEVELDB     = (1 << 20),
-        POP         = (1 << 21),
+        VALIDATION  = (1 << 21),
+        POP         = (1 << 22),
         ALL         = ~(uint32_t)0,
     };
 
